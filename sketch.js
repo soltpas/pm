@@ -1,6 +1,11 @@
 // --- 変数の宣言 ---
 let mode = 0; // 0: スタート, 1: プレイ中, 2: ゲームオーバー, 3: クリア
 let CELL_SIZE = 40; // 1マスのピクセルサイズ
+let a = 0;
+let b = 0;
+let c = 0;
+let d = 0;
+let e = 2;
 
 // マップの2次元配列: 1=壁, 0=通路（ドットあり）
 let map = [
@@ -10,9 +15,9 @@ let map = [
     [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, a, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 1, 1, 0, b, e, c, 0, 1, 1, 0, 0, 0],
+    [1, 0, 0, 0, 0, 0, 0, d, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
@@ -25,6 +30,7 @@ let pacman;
 let ghosts = [];
 let dots = []; // 2次元配列: dots[行][列] = true でドットあり
 let score;
+let sp = 0;
 
 // --- 初期化 ---
 function setup() {
@@ -58,6 +64,15 @@ function keyPressed() {
         mode = 0;
     } else if (mode == 3 && key == " ") {
         mode = 0;
+    }
+    if (mode == 1 && key == "a") {
+        pacman.speed = pacman.speed + 1;
+    }
+    if (mode == 1 && key == "s") {
+        pacman.speed = 1;
+    }
+     if (mode == 1 && key == "d") {
+        pacman.speed = 10;
     }
 }
 
@@ -131,7 +146,7 @@ function initGame() {
                 r == map.length - 1 ||
                 c == 0 ||
                 c == map[r].length - 1;
-            dots[r].push(map[r][c] == 0 && !isBorder);
+            dots[r].push(map[r][c] != 1 && !isBorder);
         }
     }
 
@@ -142,7 +157,7 @@ function initGame() {
         y: cellY(13), // ピクセル位置
         dir: { x: 1, y: 0 }, // 現在の進行方向
         nextDir: { x: 1, y: 0 }, // 次に曲がりたい方向
-        speed: 2,
+        speed: 1,
         mouthAngle: 0,
         mouthOpen: true,
     };
@@ -168,6 +183,17 @@ function initGame() {
     });
 
     score = 0;
+
+    if (a == 1) {
+        if (b == 1) {
+            if (c == 1) {
+                if (d == 1) {
+                    e = 1;
+                }
+            }
+        }
+    }
+
 }
 
 // マップを表示する (02)
@@ -179,7 +205,7 @@ function drawMap() {
                 fill(0, 0, 180);
                 rect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             }
-        }
+        }  
     }
 }
 
@@ -191,7 +217,11 @@ function drawDots() {
         for (let c = 0; c < dots[r].length; c++) {
             if (dots[r][c]) {
                 circle(cellX(c), cellY(r), 8);
-            }
+                if (map[r][c] == 2) {
+                   circle(cellX(c), cellY(r), 16);
+               }
+            } 
+            
         }
     }
 }
@@ -202,18 +232,34 @@ function checkEatDots() {
     let r = floor(pacman.y / CELL_SIZE);
     if ( r < 0 || r >= dots.length || c < 0 || c >= dots[r].length) return;
     if (dots[r][c]) {
+        if (map[r][c] == 2) {
+           score += 20;
+           sp = 1;
+        }
         dots[r][c] = false;
         score += 10;
     }
+   
 }
 
 // ゴーストとの当たり判定 (05)
 function checkHitGhost() {
-    for (let i = 0; i < ghosts.length; i++) {
+    if (sp == 0) {
+      for (let i = 0; i < ghosts.length; i++) {
         let d = dist(pacman.x, pacman.y, ghosts[i].x, ghosts[i].y);
         if (d < CELL_SIZE) {
             mode = 2;
         }
+      }
+    }
+
+     if (sp == 1) {
+      for (let i = 0; i < ghosts.length; i++) {
+        let d = dist(pacman.x, pacman.y, ghosts[i].x, ghosts[i].y);
+        if (d < CELL_SIZE) {
+            score += 5;
+        }
+      }
     }
 }
 
@@ -387,7 +433,7 @@ function cellY(row) {
 function isPath(col, row) {
     let c = wrapCol(col);
     let r = wrapRow(row);
-    return map[r][c] == 0;
+    return map[r][c] != 1;
 }
 
 // 列番号を端でワープさせる
@@ -409,7 +455,12 @@ function pacman_shape(x, y, radius, mouthAngle, dir) {
     translate(x, y);
     rotate(atan2(dir.y, dir.x));
     noStroke();
-    fill("yellow");
+    if (sp == 0) {
+        fill("yellow");
+    }
+    if (sp == 1) {
+        fill("blue");
+    }
     arc(0, 0, radius * 2, radius * 2, mouthAngle, 360 - mouthAngle, PIE);
     pop();
 }
