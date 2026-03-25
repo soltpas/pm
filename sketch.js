@@ -8,23 +8,43 @@ let d = 0;
 let e = 2;
 
 // マップの2次元配列: 1=壁, 0=通路（ドットあり）
-let map = [
+let baseMap = [
     [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, a, 0, 0, 0, 0, 0, 0, 1],
-    [0, 0, 0, 1, 1, 0, b, e, c, 0, 1, 1, 0, 0, 0],
-    [1, 0, 0, 0, 0, 0, 0, d, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
 ];
+let map = [];
+
+function copyBaseMap() {
+    map = JSON.parse(JSON.stringify(baseMap));
+}
+
+function randomizeMapSection(r0, c0, r1, c1, wallProbability = 0.35) {
+    for (let r = r0; r <= r1; r++) {
+        for (let c = c0; c <= c1; c++) {
+            if (r <= 0 || c <= 0 || r >= baseMap.length - 1 || c >= baseMap[0].length - 1) continue;
+            if (baseMap[r][c] === 1) continue; // 元々壁なら固定
+            if (baseMap[r][c] === 2) continue; // パワードットなどは維持
+            map[r][c] = random() < wallProbability ? 1 : 0;
+        }
+    }
+    // プレイヤー／ゴーストの開始位置を確実に通路にする
+    map[13][7] = 0;
+    map[1][1] = 0;
+    map[1][13] = 0;
+}
 
 let pacman;
 let ghosts = [];
@@ -41,7 +61,7 @@ function setup() {
 
 // --- メインループ ---
 function draw() {
-    background(0);
+    background(0,100);
     if (mode == 0) {
         showStartScreen();
     } else if (mode == 1) {
@@ -135,6 +155,10 @@ function showClearScreen() {
 
 // ゲームを初期化する
 function initGame() {
+    // ベースマップをコピーして、特定領域だけランダムに再生成
+    copyBaseMap();
+    randomizeMapSection(2, 2, 12, 12, 0.35); // 例：中心部をランダムに
+
     // mapの2次元配列からdotsの2次元配列を生成する
     dots = [];
     for (let r = 0; r < map.length; r++) {
@@ -215,7 +239,7 @@ function drawDots() {
     noStroke();
     for (let r = 0; r < dots.length; r++) {
         for (let c = 0; c < dots[r].length; c++) {
-            if (dots[r][c]) {
+            if (dots[r][c] ) {
                 circle(cellX(c), cellY(r), 8);
                 if (map[r][c] == 2) {
                    circle(cellX(c), cellY(r), 16);
@@ -235,9 +259,13 @@ function checkEatDots() {
         if (map[r][c] == 2) {
            score += 20;
            sp = 1;
+           time = millis();
         }
         dots[r][c] = false;
         score += 10;
+    }
+    if (sp == 1 && millis() - time > 10000) {
+        sp = 0;
     }
    
 }
@@ -455,12 +483,16 @@ function pacman_shape(x, y, radius, mouthAngle, dir) {
     translate(x, y);
     rotate(atan2(dir.y, dir.x));
     noStroke();
-    if (sp == 0) {
-        fill("yellow");
+    fill(255,212,0);
+     if (pacman.speed >=10) {
+        fill(255,212,0);
     }
     if (sp == 1) {
-        fill("blue");
+        if (millis() - time < 9000) {
+            fill("blue");
+        }
     }
+   
     arc(0, 0, radius * 2, radius * 2, mouthAngle, 360 - mouthAngle, PIE);
     pop();
 }
