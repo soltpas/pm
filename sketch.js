@@ -6,6 +6,7 @@ let b = 0;
 let c = 0;
 let d = 0;
 let e = 2;
+let cs = 1000;
 
 // マップの2次元配列: 1=壁, 0=通路（ドットあり）
 let baseMap = [
@@ -84,6 +85,7 @@ function keyPressed() {
         mode = 0;
     } else if (mode == 3 && key == " ") {
         mode = 0;
+        cs += 500;
     }
     if (mode == 1 && key == "a") {
         pacman.speed = pacman.speed + 1;
@@ -302,7 +304,7 @@ function checkHitGhost() {
       for (let i = 0; i < ghosts.length; i++) {
         let d = dist(pacman.x, pacman.y, ghosts[i].x, ghosts[i].y);
         if (d < CELL_SIZE) {
-            score += 5;
+            score += 50;
             if (i == 0) {
                 ghosts[0].x = cellX(1);
                 ghosts[0].y = cellY(1);
@@ -320,7 +322,7 @@ function checkHitGhost() {
 
 // 全部食べたか確認するのはやめました (06)
 function checkClear() {
-    if (score >= 2500) {
+    if (score >= cs) {
         mode = 3; 
     }
 }
