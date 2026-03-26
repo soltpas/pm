@@ -91,9 +91,27 @@ function keyPressed() {
     if (mode == 1 && key == "s") {
         pacman.speed = 1;
     }
-     if (mode == 1 && key == "d") {
+    if (mode == 1 && key == "d") {
         pacman.speed = 10;
     }
+    if (mode == 1 && key == " ") {
+        score -= 500;
+        ghosts[0].speed += 1;
+        ghosts[1].speed += 1;
+        dots = [];
+        for (let r = 0; r < map.length; r++) {
+            dots.push([]);
+            for (let c = 0; c < map[r].length; c++) {
+            // 端のトンネルマスにはドットを置かない
+            let isBorder =
+                r == 0 ||
+                r == map.length - 1 ||
+                c == 0 ||
+                c == map[r].length - 1;
+            dots[r].push(map[r][c] != 1 && !isBorder);
+            }
+        }
+    }    
 }
 
 // --- 画面表示 ---
@@ -193,7 +211,7 @@ function initGame() {
         x: cellX(1),
         y: cellY(1),
         dir: { x: 1, y: 0 },
-        speed: 2,
+        speed: 1,
         clr: color(255, 0, 0),
     });
     ghosts.push({
@@ -202,11 +220,11 @@ function initGame() {
         x: cellX(13),
         y: cellY(1),
         dir: { x: -1, y: 0 },
-        speed: 2,
+        speed: 1,
         clr: color(255, 184, 255),
     });
 
-    score = 0;
+    score = 500;
 
     if (a == 1) {
         if (b == 1) {
@@ -244,8 +262,7 @@ function drawDots() {
                 if (map[r][c] == 2) {
                    circle(cellX(c), cellY(r), 16);
                }
-            } 
-            
+            }   
         }
     }
 }
@@ -272,7 +289,7 @@ function checkEatDots() {
 
 // ゴーストとの当たり判定 (05)
 function checkHitGhost() {
-    if (sp == 0) {
+    if (sp == 0 && pacman.speed <= 50) {
       for (let i = 0; i < ghosts.length; i++) {
         let d = dist(pacman.x, pacman.y, ghosts[i].x, ghosts[i].y);
         if (d < CELL_SIZE) {
@@ -286,22 +303,24 @@ function checkHitGhost() {
         let d = dist(pacman.x, pacman.y, ghosts[i].x, ghosts[i].y);
         if (d < CELL_SIZE) {
             score += 5;
+            if (i == 0) {
+                ghosts[0].x = cellX(1);
+                ghosts[0].y = cellY(1);
+                ghosts[0].row = 1;
+            }
+            if (i == 1) {
+                ghosts[1].x = cellX(13);
+                ghosts[1].y = cellY(1);
+                ghosts[1].row = 1;
+            }
         }
       }
     }
 }
 
-// 全部食べたか確認する (06)
+// 全部食べたか確認するのはやめました (06)
 function checkClear() {
-    let remaining = 0;
-    for (let r = 0; r < dots.length; r++) {
-        for (let c = 0; c < dots[r].length; c++) {
-            if (dots[r][c]) {
-                remaining = remaining + 1;
-            }
-        }
-    }
-    if (remaining == 0) {
+    if (score >= 2500) {
         mode = 3; 
     }
 }
