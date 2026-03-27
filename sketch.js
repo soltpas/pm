@@ -52,6 +52,8 @@ let ghosts = [];
 let dots = []; // 2次元配列: dots[行][列] = true でドットあり
 let score;
 let sp = 0;
+let ctime = 0;
+let ct = 60000;
 
 // --- 初期化 ---
 function setup() {
@@ -67,6 +69,9 @@ function draw() {
         showStartScreen();
     } else if (mode == 1) {
         playGame();
+        if (millis() - ctime >= ct) {
+            mode = 2;
+        }
     } else if (mode == 2) {
         showGameOver();
     } else if (mode == 3) {
@@ -79,6 +84,7 @@ function keyPressed() {
     if (mode == 0 && key == " ") {
         initGame();
         mode = 1;
+        ctime = millis();
     } else if (mode == 1) {
         changeDirection();
     } else if (mode == 2 && key == " ") {
@@ -97,9 +103,7 @@ function keyPressed() {
         pacman.speed = 10;
     }
     if (mode == 1 && key == " ") {
-        score -= 500;
-        ghosts[0].speed += 1;
-        ghosts[1].speed += 1;
+        score -= 300;
         dots = [];
         for (let r = 0; r < map.length; r++) {
             dots.push([]);
@@ -213,7 +217,7 @@ function initGame() {
         x: cellX(1),
         y: cellY(1),
         dir: { x: 1, y: 0 },
-        speed: 1,
+        speed: 2,
         clr: color(255, 0, 0),
     });
     ghosts.push({
@@ -222,11 +226,13 @@ function initGame() {
         x: cellX(13),
         y: cellY(1),
         dir: { x: -1, y: 0 },
-        speed: 1,
+        speed: 2,
         clr: color(255, 184, 255),
     });
 
-    score = 500;
+    score = 300;
+
+    sp = 0;
 
     if (a == 1) {
         if (b == 1) {
@@ -276,7 +282,7 @@ function checkEatDots() {
     if ( r < 0 || r >= dots.length || c < 0 || c >= dots[r].length) return;
     if (dots[r][c]) {
         if (map[r][c] == 2) {
-           score += 20;
+           score += 90;
            sp = 1;
            time = millis();
         }
@@ -304,7 +310,6 @@ function checkHitGhost() {
       for (let i = 0; i < ghosts.length; i++) {
         let d = dist(pacman.x, pacman.y, ghosts[i].x, ghosts[i].y);
         if (d < CELL_SIZE) {
-            score += 50;
             if (i == 0) {
                 ghosts[0].x = cellX(1);
                 ghosts[0].y = cellY(1);
@@ -466,6 +471,8 @@ function drawScore() {
     textAlign(LEFT);
     textSize(16);
     text("SCORE: " + score, 10, 25);
+    text("TIME: " + floor((ct - (millis() - ctime)) / 1000), 10, 45);
+    text("SPEED: " + pacman.speed, 10, 65);
 }
 
 // マスの列番号 → X座標（マス中心）
